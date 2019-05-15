@@ -3,10 +3,10 @@
 
 
 struct State {
-    const unsigned id;
-    bool acceptor = false;
-    static unsigned count;
-    State() : id(count++) { };
+	const unsigned id;
+	bool acceptor = false;
+	static unsigned count;
+	State() : id(count++) { };
 };
 
 unsigned State::count = 0;

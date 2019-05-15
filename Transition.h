@@ -8,23 +8,25 @@ class Transition {
 
 protected:
 
-    std::shared_ptr<State> target_;
-    char transit_;
+    std::shared_ptr<State> _target;
+    char _transit;
 
 public:
 
-    Transition(std::shared_ptr<State> target, char transit = 0) : target_{target}, transit_{transit} { }
+    Transition(std::shared_ptr<State> target, char transit = 0) : _target{target}, _transit{transit} { }
 
-    virtual std::shared_ptr<State> fire(std::string::iterator& it) {
-        if (transit_ == *it) {
+    virtual std::shared_ptr<State> fire(std::string::iterator& it, std::string::iterator&& end) {
+		if (it == end)
+			return nullptr;
+        if (_transit == *it) {
             ++it;
-            return target_;
+            return _target;
         }
         return nullptr;
     }
 
     std::shared_ptr<State> getTarget() {
-        return  target_;
+        return  _target;
     }
 
     virtual ~Transition() = default;
@@ -36,8 +38,8 @@ public:
 
     using Transition::Transition;
 
-    virtual std::shared_ptr<State> fire(std::string::iterator&) override {
-        return target_;
+    virtual std::shared_ptr<State> fire(std::string::iterator&, std::string::iterator&&) override {
+        return _target;
     }
 
 };

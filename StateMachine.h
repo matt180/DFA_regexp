@@ -12,23 +12,23 @@ class StateMachine {
 
     using state_ptr = std::shared_ptr<State>;
 
-    state_ptr start_, end_;
+    state_ptr _start, _end;
 
-    std::map<std::shared_ptr<State>, std::vector<transit_ptr>> transitions_;
+    std::map<std::shared_ptr<State>, std::vector<transit_ptr>> _transitions;
 
 public:
 
-    StateMachine() : start_{std::make_shared<State>()}, end_{start_}, transitions_{} { }
+    StateMachine() : _start{std::make_shared<State>()}, _end{_start}, _transitions{} { }
 
-    StateMachine(state_ptr start) : start_{start}, end_{start}, transitions_{} { }
+    StateMachine(state_ptr start) : _start{start}, _end{start}, _transitions{} { }
 
-    void concatenate(StateMachine& sm, std::shared_ptr<State> start, std::shared_ptr<State> end) {
+    void concatenate(StateMachine& sm) {
         auto new_transitions = sm.getTransitions();
-        addTransition(end_, std::make_shared<PermeableTransition>(start));
+        addTransition(_end, std::make_shared<PermeableTransition>(sm.getStart()));
         for (auto t : new_transitions) {
-            transitions_.insert(t);
+            _transitions.insert(t);
         }
-        end_ = end;
+        _end = sm.getEnd();
     }
 
     void addTransition(state_ptr start, state_ptr target, char transit) {
@@ -37,34 +37,46 @@ public:
     }
 
     void addTransition(state_ptr state, transit_ptr transit) {
-        auto elem = transitions_.find(state);
-        if (elem != transitions_.end()) {
+        auto elem = _transitions.find(state);
+        if (elem != _transitions.end()) {
             elem->second.push_back(transit);
         } else {
-            transitions_[state] = std::vector<transit_ptr>();
-            transitions_[state].push_back(transit);
-            end_ = transit->getTarget();
+            _transitions[state] = std::vector<transit_ptr>();
+            _transitions[state].push_back(transit);
         }
+		_end = transit->getTarget();
+    }
 
+    void makeLastAcceptor() {
+        _end->acceptor = true;
     }
 
     std::map<state_ptr, std::vector<transit_ptr>> getTransitions() {
-        return transitions_;
+        return _transitions;
+    }
+
+	state_ptr getStart() {
+		return _start;
+	}
+
+    state_ptr getEnd() {
+        return _end;
     }
 
     bool validate(std::string in) {
         auto pos = in.begin();
         bool terminate = false;
-        state_ptr act = start_;
+        state_ptr act = _start;
         while (!terminate) {
-            auto transits = transitions_[act];
+            auto transits = _transitions[act];
             terminate = true;
             for (auto&& t : transits) {
-                act = t->fire(pos);
+                auto target = t->fire(pos, in.end());
                 if (pos == in.end()) {
                     terminate = true;
                 }
-                if (act) {
+                if (target) {
+					act = target;
                     terminate = false;
                     break;
                 }
